@@ -82,8 +82,14 @@ public class Trainer {
             this.transferGraph.fit(dataSet);
         });
         this.negativeInputs.forEach(input -> {
-            final DataSet dataSet = new DataSet(input, new NDArray(POSITIVE_OUTPUT));
+            final DataSet dataSet = new DataSet(input, new NDArray(NEGATIVE_OUTPUT));
             this.transferGraph.fit(dataSet);
         });
+    }
+
+    public double check(final String imagePath) {
+        final INDArray input = encodeImage(imagePath);
+        final INDArray result = this.transferGraph.outputSingle(input);
+        return result.getDouble(0);
     }
 }

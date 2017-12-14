@@ -2,6 +2,8 @@ package info.magnolia.ai.similarity;
 
 import java.io.IOException;
 
+import org.nd4j.linalg.api.ndarray.INDArray;
+
 public class App {
 
     private static final String[] ALL_IMAGES = {
@@ -86,7 +88,7 @@ public class App {
 
     public static void main(String[] args) throws IOException {
         final Trainer trainer = new Trainer(SAMPLES_POSITIVE, SAMPLES_NEGATIVE);
-        trainer.train(3);
+        trainer.train(2);
 
         // FIXME: Score is always 1.00
         for (String image : ALL_IMAGES) {
@@ -95,6 +97,13 @@ public class App {
                 System.out.println(String.format("MATCH (%.2f): %s", score, image));
             else
                 System.out.println(String.format("NON-MATCH (%.2f): %s", score, image));
+
+            final INDArray pretrainedScore = trainer.checkWithPretrained(image);
+            for (int i = 0; i < pretrainedScore.size(0); i++) {
+                if (pretrainedScore.getFloat(i) > 0.5)
+                    System.out.print(i);
+            }
+            System.out.println();
         }
     }
 }

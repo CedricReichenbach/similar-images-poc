@@ -27,38 +27,48 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 public class Trainer {
 
-    private static final double[][] POSITIVE_OUTPUT = {{1}};
-    private static final double[][] NEGATIVE_OUTPUT = {{0}};
+    private static final float[] POSITIVE_OUTPUT = {1};
+    private static final float[] NEGATIVE_OUTPUT = {0};
 
+    private final ComputationGraph pretrainedNet;
     private final ComputationGraph transferGraph;
 
     private final Collection<INDArray> positiveInputs;
     private final Collection<INDArray> negativeInputs;
 
     public Trainer(final String[] positives, final String[] negatives) throws IOException {
-        final ComputationGraph pretrainedNet = (ComputationGraph) new VGG16().initPretrained(PretrainedType.IMAGENET);
+        pretrainedNet = (ComputationGraph) new VGG16().initPretrained(PretrainedType.IMAGENET);
+        System.out.println("Original model:");
+        System.out.println(pretrainedNet.summary());
+
         final FineTuneConfiguration fineTuneConfiguration = new FineTuneConfiguration.Builder()
-                .learningRate(1d / (positives.length + negatives.length))
+                .learningRate(0.1d / (positives.length + negatives.length))
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                 .updater(Updater.NESTEROVS)
                 .build();
         transferGraph = new TransferLearning.GraphBuilder(pretrainedNet)
                 .fineTuneConfiguration(fineTuneConfiguration)
-                .setFeatureExtractor("fc2") // XXX: What is this?
+                .setFeatureExtractor("fc2") // freeze this and below
 //                .removeVertexAndConnections("predictions") // XXX: Maybe this?
                 .removeVertexKeepConnections("predictions")
                 .addLayer("predictions",
                         new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
                                 .nIn(4096).nOut(1) // santa hat or not santa hat
                                 .weightInit(WeightInit.XAVIER)
-                                .activation(Activation.SOFTMAX)
+//                                .activation(Activation.SOFTMAX)
+                                .activation(Activation.TANH)
                                 .build(), "fc2")
                 .build();
+        System.out.println("Transfer model:");
+        System.out.println(transferGraph.summary());
 
         System.out.println("Encoding positive samples...");
         this.positiveInputs = Arrays.stream(positives).map(this::encodeImage).collect(toList());
         System.out.println("Encoding negative samples...");
         this.negativeInputs = Arrays.stream(negatives).map(this::encodeImage).collect(toList());
+
+        System.out.println("Output layer:");
+        System.out.println(transferGraph.getOutputLayer(0).params());
     }
 
     private INDArray encodeImage(final String filePath) {
@@ -85,11 +95,18 @@ public class Trainer {
             final DataSet dataSet = new DataSet(input, new NDArray(NEGATIVE_OUTPUT));
             this.transferGraph.fit(dataSet);
         });
+
+        System.out.println("Output layer:");
+        System.out.println(transferGraph.getOutputLayer(0).params());
     }
 
-    public double check(final String imagePath) {
+    public float check(final String imagePath) {
         final INDArray input = encodeImage(imagePath);
         final INDArray result = this.transferGraph.outputSingle(input);
-        return result.getDouble(0);
+        return result.getFloat(0);
+    }
+
+    public INDArray checkWithPretrained(final String imagePath) {
+        return this.pretrainedNet.outputSingle(encodeImage(imagePath));
     }
 }

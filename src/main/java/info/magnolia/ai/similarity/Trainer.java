@@ -12,6 +12,7 @@ import java.util.stream.IntStream;
 import org.datavec.image.loader.NativeImageLoader;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.Updater;
+import org.deeplearning4j.nn.conf.distribution.NormalDistribution;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.transferlearning.FineTuneConfiguration;
@@ -23,12 +24,14 @@ import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.cpu.nativecpu.NDArray;
 import org.nd4j.linalg.dataset.DataSet;
+import org.nd4j.linalg.dataset.api.preprocessor.VGG16ImagePreProcessor;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 public class Trainer {
 
-    private static final float[] POSITIVE_OUTPUT = {1};
-    private static final float[] NEGATIVE_OUTPUT = {0};
+    private static final float[] POSITIVE_OUTPUT = {1, 0};
+    private static final float[] NEGATIVE_OUTPUT = {0, 1};
+    private static final int NUM_OUTPUTS = POSITIVE_OUTPUT.length;
 
     private final ComputationGraph pretrainedNet;
     private final ComputationGraph transferGraph;
@@ -53,10 +56,13 @@ public class Trainer {
                 .removeVertexKeepConnections("predictions")
                 .addLayer("predictions",
                         new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
-                                .nIn(4096).nOut(1) // santa hat or not santa hat
-                                .weightInit(WeightInit.XAVIER)
+                                .nIn(4096).nOut(NUM_OUTPUTS) // santa hat or not santa hat
+//                                .weightInit(WeightInit.XAVIER)
+                                .weightInit(WeightInit.DISTRIBUTION)
+                                .dist(new NormalDistribution(0, 0.2 * (2.0 / (4096 + NUM_OUTPUTS))))
 //                                .activation(Activation.SOFTMAX)
-                                .activation(Activation.TANH)
+//                                .activation(Activation.TANH)
+                                .activation(Activation.RELU)
                                 .build(), "fc2")
                 .build();
         System.out.println("Transfer model:");
@@ -73,9 +79,12 @@ public class Trainer {
 
     private INDArray encodeImage(final String filePath) {
         final NativeImageLoader imageLoader = new NativeImageLoader(224, 224, 3);
+        final VGG16ImagePreProcessor scaler = new VGG16ImagePreProcessor();
         try {
             final File dir = new File(App.class.getResource(".").toURI());
-            return imageLoader.asMatrix(new File(dir, filePath));
+            final INDArray imageArray = imageLoader.asMatrix(new File(dir, filePath));
+            scaler.transform(imageArray);
+            return imageArray;
         } catch (IOException | URISyntaxException e) {
             throw new RuntimeException(e);
         }
@@ -103,7 +112,12 @@ public class Trainer {
     public float check(final String imagePath) {
         final INDArray input = encodeImage(imagePath);
         final INDArray result = this.transferGraph.outputSingle(input);
-        return result.getFloat(0);
+
+        final float pos = result.getFloat(0);
+        final float neg = result.getFloat(1);
+
+        // TODO: Let model do normalization
+        return pos / (pos + neg);
     }
 
     public INDArray checkWithPretrained(final String imagePath) {

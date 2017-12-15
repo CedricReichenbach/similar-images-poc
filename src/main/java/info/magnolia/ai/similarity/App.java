@@ -91,6 +91,7 @@ public class App {
         trainer.train(2);
 
         // FIXME: Score is always 1.00
+        // Maybe normalization going on somewhere? And because we just have 1 class, it's value is always 1.
         for (String image : ALL_IMAGES) {
             final double score = trainer.check(image);
             if (score > 0.5)
@@ -99,9 +100,9 @@ public class App {
                 System.out.println(String.format("NON-MATCH (%.2f): %s", score, image));
 
             final INDArray pretrainedScore = trainer.checkWithPretrained(image);
-            for (int i = 0; i < pretrainedScore.size(0); i++) {
-                if (pretrainedScore.getFloat(i) > 0.5)
-                    System.out.print(i);
+            // XXX: Wtf is the shape of pretrainedScore? And why?
+            for (int i = 0; i < pretrainedScore.size(1); i++) {
+                System.out.print(pretrainedScore.getFloat(i) + " ");
             }
             System.out.println();
         }

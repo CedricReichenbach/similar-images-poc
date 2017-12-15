@@ -11,7 +11,9 @@ import java.util.stream.IntStream;
 
 import org.datavec.image.loader.NativeImageLoader;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
+import org.deeplearning4j.nn.conf.GradientNormalization;
 import org.deeplearning4j.nn.conf.Updater;
+import org.deeplearning4j.nn.conf.distribution.NormalDistribution;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.transferlearning.FineTuneConfiguration;
@@ -20,6 +22,8 @@ import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.zoo.PretrainedType;
 import org.deeplearning4j.zoo.model.VGG16;
 import org.nd4j.linalg.activations.Activation;
+import org.nd4j.linalg.api.buffer.DataBuffer;
+import org.nd4j.linalg.api.buffer.util.DataTypeUtil;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.cpu.nativecpu.NDArray;
 import org.nd4j.linalg.dataset.DataSet;
@@ -39,12 +43,12 @@ public class Trainer {
     private final Collection<INDArray> negativeInputs;
 
     public Trainer(final String[] positives, final String[] negatives) throws IOException {
+        DataTypeUtil.setDTypeForContext(DataBuffer.Type.DOUBLE);
+
         pretrainedNet = (ComputationGraph) new VGG16().initPretrained(PretrainedType.IMAGENET);
-        System.out.println("Original model:");
-        System.out.println(pretrainedNet.summary());
 
         final FineTuneConfiguration fineTuneConfiguration = new FineTuneConfiguration.Builder()
-                .learningRate(0.1d / (positives.length + negatives.length))
+                .learningRate(0.05d / (positives.length + negatives.length))
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                 .updater(Updater.NESTEROVS)
                 .build();
@@ -56,12 +60,13 @@ public class Trainer {
                 .addLayer("predictions",
                         new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
                                 .nIn(4096).nOut(NUM_OUTPUTS) // santa hat or not santa hat
-                                .weightInit(WeightInit.XAVIER)
-//                                .weightInit(WeightInit.DISTRIBUTION)
-//                                .dist(new NormalDistribution(0, 0.2 * (2.0 / (4096 + NUM_OUTPUTS))))
-//                                .activation(Activation.SOFTMAX)
+//                                .weightInit(WeightInit.XAVIER)
+//                                .weightInit(WeightInit.RELU)
+                                .weightInit(WeightInit.DISTRIBUTION)
+                                .dist(new NormalDistribution(0, 0.2 * (2.0 / (4096 + NUM_OUTPUTS))))
+                                .activation(Activation.SOFTMAX)
 //                                .activation(Activation.TANH)
-                                .activation(Activation.RELU)
+//                                .activation(Activation.RELU)
                                 .build(), "fc2")
                 .build();
         System.out.println("Transfer model:");
@@ -90,6 +95,7 @@ public class Trainer {
     }
 
     public void train(final int iterations) {
+        // FIXME: Training sometimes "kills" weights, i.e. ends up with NaNs. Looks like arithmetic underflow, but why?
         IntStream.range(0, iterations).forEach(i -> this.runIteration());
     }
 
@@ -108,7 +114,7 @@ public class Trainer {
         System.out.println(transferGraph.getOutputLayer(0).params());
     }
 
-    public float check(final String imagePath) {
+    public double check(final String imagePath) {
         final INDArray input = encodeImage(imagePath);
         final INDArray result = this.transferGraph.outputSingle(input);
 

@@ -5,9 +5,19 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 
 import org.apache.commons.io.FileUtils;
-import org.nd4j.linalg.api.ndarray.INDArray;
 
 public class App {
+
+    private static final File HERE;
+    private static final double THRESHOLD = 0.6;
+
+    static {
+        try {
+            HERE = new File(App.class.getResource(".").toURI());
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     private static final String[] ALL_IMAGES = {
             "images/portraits/n_2017-09-30-05-45-31-1100x589.jpg",
@@ -93,9 +103,12 @@ public class App {
         final Trainer trainer = new Trainer(SAMPLES_POSITIVE, SAMPLES_NEGATIVE);
         trainer.train(5);
 
+        FileUtils.cleanDirectory(new File(HERE, "results/positive"));
+        FileUtils.cleanDirectory(new File(HERE, "results/negative"));
+
         for (String image : ALL_IMAGES) {
             final double score = trainer.check(image);
-            if (score > 0.5) {
+            if (score > THRESHOLD) {
                 System.out.println(String.format("MATCH (%.2f): %s", score, image));
                 copyTo("results/positive", image);
             } else {
@@ -107,9 +120,8 @@ public class App {
 
     private static void copyTo(String dir, String image) {
         try {
-            final File here = new File(App.class.getResource(".").toURI());
-            FileUtils.copyFileToDirectory(new File(here, image), new File(here, dir));
-        } catch (URISyntaxException | IOException e) {
+            FileUtils.copyFileToDirectory(new File(HERE, image), new File(HERE, dir));
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }

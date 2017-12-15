@@ -1,7 +1,10 @@
 package info.magnolia.ai.similarity;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 
+import org.apache.commons.io.FileUtils;
 import org.nd4j.linalg.api.ndarray.INDArray;
 
 public class App {
@@ -88,23 +91,26 @@ public class App {
 
     public static void main(String[] args) throws IOException {
         final Trainer trainer = new Trainer(SAMPLES_POSITIVE, SAMPLES_NEGATIVE);
-        trainer.train(2);
+        trainer.train(5);
 
-        // FIXME: Score is always 1.00
-        // Maybe normalization going on somewhere? And because we just have 1 class, it's value is always 1.
         for (String image : ALL_IMAGES) {
             final double score = trainer.check(image);
-            if (score > 0.5)
+            if (score > 0.5) {
                 System.out.println(String.format("MATCH (%.2f): %s", score, image));
-            else
+                copyTo("results/positive", image);
+            } else {
                 System.out.println(String.format("NON-MATCH (%.2f): %s", score, image));
-
-            final INDArray pretrainedScore = trainer.checkWithPretrained(image);
-            // XXX: Wtf is the shape of pretrainedScore? And why?
-            for (int i = 0; i < pretrainedScore.size(1); i++) {
-                System.out.print(pretrainedScore.getFloat(i) + " ");
+                copyTo("results/negative", image);
             }
-            System.out.println();
+        }
+    }
+
+    private static void copyTo(String dir, String image) {
+        try {
+            final File here = new File(App.class.getResource(".").toURI());
+            FileUtils.copyFileToDirectory(new File(here, image), new File(here, dir));
+        } catch (URISyntaxException | IOException e) {
+            throw new RuntimeException(e);
         }
     }
 }

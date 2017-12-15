@@ -12,7 +12,6 @@ import java.util.stream.IntStream;
 import org.datavec.image.loader.NativeImageLoader;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.Updater;
-import org.deeplearning4j.nn.conf.distribution.NormalDistribution;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.transferlearning.FineTuneConfiguration;
@@ -57,9 +56,9 @@ public class Trainer {
                 .addLayer("predictions",
                         new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
                                 .nIn(4096).nOut(NUM_OUTPUTS) // santa hat or not santa hat
-//                                .weightInit(WeightInit.XAVIER)
-                                .weightInit(WeightInit.DISTRIBUTION)
-                                .dist(new NormalDistribution(0, 0.2 * (2.0 / (4096 + NUM_OUTPUTS))))
+                                .weightInit(WeightInit.XAVIER)
+//                                .weightInit(WeightInit.DISTRIBUTION)
+//                                .dist(new NormalDistribution(0, 0.2 * (2.0 / (4096 + NUM_OUTPUTS))))
 //                                .activation(Activation.SOFTMAX)
 //                                .activation(Activation.TANH)
                                 .activation(Activation.RELU)

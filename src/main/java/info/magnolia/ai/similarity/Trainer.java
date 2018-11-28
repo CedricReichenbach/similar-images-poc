@@ -11,9 +11,7 @@ import java.util.stream.IntStream;
 
 import org.datavec.image.loader.NativeImageLoader;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
-import org.deeplearning4j.nn.conf.GradientNormalization;
 import org.deeplearning4j.nn.conf.Updater;
-import org.deeplearning4j.nn.conf.distribution.NormalDistribution;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.transferlearning.FineTuneConfiguration;
@@ -32,8 +30,8 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 public class Trainer {
 
-    private static final float[] POSITIVE_OUTPUT = {1, 0};
-    private static final float[] NEGATIVE_OUTPUT = {0, 1};
+    private static final float[] POSITIVE_OUTPUT = {1};
+    private static final float[] NEGATIVE_OUTPUT = {0};
     private static final int NUM_OUTPUTS = POSITIVE_OUTPUT.length;
 
     private final ComputationGraph pretrainedNet;
@@ -48,7 +46,7 @@ public class Trainer {
         pretrainedNet = (ComputationGraph) new VGG16().initPretrained(PretrainedType.IMAGENET);
 
         final FineTuneConfiguration fineTuneConfiguration = new FineTuneConfiguration.Builder()
-                .learningRate(0.05d / (positives.length + negatives.length))
+                .learningRate(0.001d / (positives.length + negatives.length))
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                 .updater(Updater.NESTEROVS)
                 .build();
@@ -58,15 +56,10 @@ public class Trainer {
 //                .removeVertexAndConnections("predictions") // XXX: Maybe this?
                 .removeVertexKeepConnections("predictions")
                 .addLayer("predictions",
-                        new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
+                        new OutputLayer.Builder(LossFunctions.LossFunction.XENT)
                                 .nIn(4096).nOut(NUM_OUTPUTS) // santa hat or not santa hat
-//                                .weightInit(WeightInit.XAVIER)
-//                                .weightInit(WeightInit.RELU)
-                                .weightInit(WeightInit.DISTRIBUTION)
-                                .dist(new NormalDistribution(0, 0.2 * (2.0 / (4096 + NUM_OUTPUTS))))
-                                .activation(Activation.SOFTMAX)
-//                                .activation(Activation.TANH)
-//                                .activation(Activation.RELU)
+                                .weightInit(WeightInit.ZERO)
+                                .activation(Activation.SIGMOID)
                                 .build(), "fc2")
                 .build();
         System.out.println("Transfer model:");
@@ -103,12 +96,15 @@ public class Trainer {
         System.out.println("Running iteration...");
         this.positiveInputs.forEach(input -> {
             final DataSet dataSet = new DataSet(input, new NDArray(POSITIVE_OUTPUT));
+            System.out.print("☑");
             this.transferGraph.fit(dataSet);
         });
         this.negativeInputs.forEach(input -> {
+            System.out.print("☐");
             final DataSet dataSet = new DataSet(input, new NDArray(NEGATIVE_OUTPUT));
             this.transferGraph.fit(dataSet);
         });
+        System.out.println();
 
         System.out.println("Output layer:");
         System.out.println(transferGraph.getOutputLayer(0).params());
@@ -116,13 +112,10 @@ public class Trainer {
 
     public double check(final String imagePath) {
         final INDArray input = encodeImage(imagePath);
+        // FIXME: Prevent normalization! otherwise, always [1]
         final INDArray result = this.transferGraph.outputSingle(input);
 
-        final float pos = result.getFloat(0);
-        final float neg = result.getFloat(1);
-
-        // TODO: Let model do normalization
-        return pos / (pos + neg);
+        return result.getFloat(0);
     }
 
     public INDArray checkWithPretrained(final String imagePath) {

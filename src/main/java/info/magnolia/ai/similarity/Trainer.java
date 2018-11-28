@@ -11,7 +11,6 @@ import java.util.stream.IntStream;
 
 import org.datavec.image.loader.NativeImageLoader;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
-import org.deeplearning4j.nn.conf.Updater;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.transferlearning.FineTuneConfiguration;
@@ -26,6 +25,7 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.cpu.nativecpu.NDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.api.preprocessor.VGG16ImagePreProcessor;
+import org.nd4j.linalg.learning.config.Nesterovs;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 public class Trainer {
@@ -43,12 +43,11 @@ public class Trainer {
     public Trainer(final String[] positives, final String[] negatives) throws IOException {
         DataTypeUtil.setDTypeForContext(DataBuffer.Type.DOUBLE);
 
-        pretrainedNet = (ComputationGraph) new VGG16().initPretrained(PretrainedType.IMAGENET);
+        pretrainedNet = (ComputationGraph) VGG16.builder().build().initPretrained(PretrainedType.IMAGENET);
 
         final FineTuneConfiguration fineTuneConfiguration = new FineTuneConfiguration.Builder()
-                .learningRate(0.001d / (positives.length + negatives.length))
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-                .updater(Updater.NESTEROVS)
+                .updater(new Nesterovs(0.001d / (positives.length + negatives.length), 0.1))
                 .build();
         transferGraph = new TransferLearning.GraphBuilder(pretrainedNet)
                 .fineTuneConfiguration(fineTuneConfiguration)

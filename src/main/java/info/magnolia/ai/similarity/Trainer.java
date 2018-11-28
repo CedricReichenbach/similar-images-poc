@@ -47,7 +47,7 @@ public class Trainer {
 
         final FineTuneConfiguration fineTuneConfiguration = new FineTuneConfiguration.Builder()
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-                .updater(new Nesterovs(0.001d / (positives.length + negatives.length), 0.1))
+                .updater(new Nesterovs(0.01d / (positives.length + negatives.length), 0.1))
                 .build();
         transferGraph = new TransferLearning.GraphBuilder(pretrainedNet)
                 .fineTuneConfiguration(fineTuneConfiguration)

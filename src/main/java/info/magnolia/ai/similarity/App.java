@@ -9,7 +9,7 @@ import org.apache.commons.io.FileUtils;
 public class App {
 
     private static final File HERE;
-    private static final double THRESHOLD = 0.6;
+    private static final double THRESHOLD = 0.5;
 
     static {
         try {
@@ -19,38 +19,38 @@ public class App {
         }
     }
 
-    private static final String[] ALL_IMAGES = {
-            "images/portraits/n_2017-09-30-05-45-31-1100x589.jpg",
-            "images/portraits/n_young-woman-1119479_960_720.jpg",
-            "images/portraits/n_girl-with-flowers-1374221_640.jpg",
-            "images/portraits/n_LinusPaulingGraduation1922.jpg",
-            "images/portraits/s_white-male-1754269_960_720.jpg",
-            "images/portraits/n_man-1464787_960_720.jpg",
-            "images/portraits/n_girl-1770829_960_720.jpg",
-            "images/portraits/s_white-cute-red-child-clothing-christmas-baby-face-infant-toddler-head-skin-organ-adorable-blue-eyes-917499.jpg",
-            "images/portraits/n_pexels-photo-691989.jpeg",
-            "images/portraits/n_pexels-photo-247917.jpeg",
-            "images/portraits/s_woman-in-santa-hat-1506441181V8C.jpg",
-            "images/portraits/n_Male-Old-Poland-Dad-Fatigue-Man-Father-A-Person-114257.jpg",
-            "images/portraits/n_India-Human-Hindu-Portrait-613601.jpg",
-            "images/portraits/s_santa-958641_960_720.jpg",
-            "images/portraits/s_santa-woman-portrait-1481305483lzf.jpg",
-            "images/portraits/s_7457961848_f1ef1c3f0f_b.jpg",
-            "images/portraits/n_pexels-photo-715822.jpeg",
-            "images/portraits/s_woman-with-a-christmas-cracker-1480523778FaQ.jpg",
-            "images/portraits/s_santa-woman-portrait-1481383803O3M.jpg",
-            "images/portraits/n_male-2408532_960_720.jpg",
-            "images/portraits/s_Snow-Fig-Owl-Contemplative-Christmas-Santa-Hat-1906639.jpg",
-            "images/portraits/n_2017-04-11-18-49-49-725x485.jpg",
-            "images/portraits/n_Hat-Cool-Fashion-Face-Portrait-Waif-996038.jpg",
-            "images/portraits/n_Peter_Pace_official_portrait.jpg",
-            "images/portraits/n_819px-Hillary_Clinton_official_Secretary_of_State_portrait_crop.jpg",
-            "images/portraits/s_christmas-business-people-1478194721vrf.jpg",
-            "images/portraits/n_Woman-Hat-Model-Beautiful-Portrait-Person-1845148.jpg",
-            "images/portraits/s_A_Bigly_Christmas.jpg",
-            "images/portraits/s_Santa-Hat-Red-Mackerel-Cat-Cute-Funny-Christmas-1898614.jpg",
-            "images/portraits/n_Person-Man-Headshot-Hat-Male-Portrait-People-2334963.jpg",
-            "images/portraits/n_woman-2999000_640.jpg",
+    private static final String[] TEST_IMAGES = {
+//            "images/portraits/n_2017-09-30-05-45-31-1100x589.jpg",
+//            "images/portraits/n_young-woman-1119479_960_720.jpg",
+//            "images/portraits/n_girl-with-flowers-1374221_640.jpg",
+//            "images/portraits/n_LinusPaulingGraduation1922.jpg",
+//            "images/portraits/s_white-male-1754269_960_720.jpg",
+//            "images/portraits/n_man-1464787_960_720.jpg",
+//            "images/portraits/n_girl-1770829_960_720.jpg",
+//            "images/portraits/s_white-cute-red-child-clothing-christmas-baby-face-infant-toddler-head-skin-organ-adorable-blue-eyes-917499.jpg",
+//            "images/portraits/n_pexels-photo-691989.jpeg",
+//            "images/portraits/n_pexels-photo-247917.jpeg",
+//            "images/portraits/s_woman-in-santa-hat-1506441181V8C.jpg",
+//            "images/portraits/n_Male-Old-Poland-Dad-Fatigue-Man-Father-A-Person-114257.jpg",
+//            "images/portraits/n_India-Human-Hindu-Portrait-613601.jpg",
+//            "images/portraits/s_santa-958641_960_720.jpg",
+//            "images/portraits/s_santa-woman-portrait-1481305483lzf.jpg",
+//            "images/portraits/s_7457961848_f1ef1c3f0f_b.jpg",
+//            "images/portraits/n_pexels-photo-715822.jpeg",
+//            "images/portraits/s_woman-with-a-christmas-cracker-1480523778FaQ.jpg",
+//            "images/portraits/s_santa-woman-portrait-1481383803O3M.jpg",
+//            "images/portraits/n_male-2408532_960_720.jpg",
+//            "images/portraits/s_Snow-Fig-Owl-Contemplative-Christmas-Santa-Hat-1906639.jpg",
+//            "images/portraits/n_2017-04-11-18-49-49-725x485.jpg",
+//            "images/portraits/n_Hat-Cool-Fashion-Face-Portrait-Waif-996038.jpg",
+//            "images/portraits/n_Peter_Pace_official_portrait.jpg",
+//            "images/portraits/n_819px-Hillary_Clinton_official_Secretary_of_State_portrait_crop.jpg",
+//            "images/portraits/s_christmas-business-people-1478194721vrf.jpg",
+//            "images/portraits/n_Woman-Hat-Model-Beautiful-Portrait-Person-1845148.jpg",
+//            "images/portraits/s_A_Bigly_Christmas.jpg",
+//            "images/portraits/s_Santa-Hat-Red-Mackerel-Cat-Cute-Funny-Christmas-1898614.jpg",
+//            "images/portraits/n_Person-Man-Headshot-Hat-Male-Portrait-People-2334963.jpg",
+//            "images/portraits/n_woman-2999000_640.jpg",
             "images/mixed/US_Navy_091202-N-7280V-285_Sailors_dance_at_the_annual_Christmas_Disco_Party_for_the_disabled_during_a_community_outreach_project.jpg",
             "images/mixed/hands-437968_640.jpg",
             "images/mixed/kids-2989103_640.jpg",
@@ -88,14 +88,14 @@ public class App {
             "images/portraits/s_A_Bigly_Christmas.jpg",
             "images/portraits/s_christmas-business-people-1478194721vrf.jpg",
             "images/portraits/s_santa-958641_960_720.jpg",
-//            "images/portraits/s_Santa-Hat-Red-Mackerel-Cat-Cute-Funny-Christmas-1898614.jpg",
-//            "images/portraits/s_santa-woman-portrait-1481305483lzf.jpg",
-//            "images/portraits/s_santa-woman-portrait-1481383803O3M.jpg",
-//            "images/portraits/s_Snow-Fig-Owl-Contemplative-Christmas-Santa-Hat-1906639.jpg",
-//            "images/portraits/s_white-cute-red-child-clothing-christmas-baby-face-infant-toddler-head-skin-organ-adorable-blue-eyes-917499.jpg",
-//            "images/portraits/s_white-male-1754269_960_720.jpg",
-//            "images/portraits/s_woman-in-santa-hat-1506441181V8C.jpg",
-//            "images/portraits/s_woman-with-a-christmas-cracker-1480523778FaQ.jpg"
+            "images/portraits/s_Santa-Hat-Red-Mackerel-Cat-Cute-Funny-Christmas-1898614.jpg",
+            "images/portraits/s_santa-woman-portrait-1481305483lzf.jpg",
+            "images/portraits/s_santa-woman-portrait-1481383803O3M.jpg",
+            "images/portraits/s_Snow-Fig-Owl-Contemplative-Christmas-Santa-Hat-1906639.jpg",
+            "images/portraits/s_white-cute-red-child-clothing-christmas-baby-face-infant-toddler-head-skin-organ-adorable-blue-eyes-917499.jpg",
+            "images/portraits/s_white-male-1754269_960_720.jpg",
+            "images/portraits/s_woman-in-santa-hat-1506441181V8C.jpg",
+            "images/portraits/s_woman-with-a-christmas-cracker-1480523778FaQ.jpg"
     };
 
     private static final String[] SAMPLES_NEGATIVE = {
@@ -103,14 +103,14 @@ public class App {
             "images/portraits/n_2017-09-30-05-45-31-1100x589.jpg",
             "images/portraits/n_819px-Hillary_Clinton_official_Secretary_of_State_portrait_crop.jpg",
             "images/portraits/n_girl-1770829_960_720.jpg",
-//            "images/portraits/n_girl-with-flowers-1374221_640.jpg",
-//            "images/portraits/n_Hat-Cool-Fashion-Face-Portrait-Waif-996038.jpg",
-//            "images/portraits/n_India-Human-Hindu-Portrait-613601.jpg",
-//            "images/portraits/n_LinusPaulingGraduation1922.jpg",
-//            "images/portraits/n_male-2408532_960_720.jpg",
-//            "images/portraits/n_Male-Old-Poland-Dad-Fatigue-Man-Father-A-Person-114257.jpg",
-//            "images/portraits/n_man-1464787_960_720.jpg",
-//            "images/portraits/n_Person-Man-Headshot-Hat-Male-Portrait-People-2334963.jpg",
+            "images/portraits/n_girl-with-flowers-1374221_640.jpg",
+            "images/portraits/n_Hat-Cool-Fashion-Face-Portrait-Waif-996038.jpg",
+            "images/portraits/n_India-Human-Hindu-Portrait-613601.jpg",
+            "images/portraits/n_LinusPaulingGraduation1922.jpg",
+            "images/portraits/n_male-2408532_960_720.jpg",
+            "images/portraits/n_Male-Old-Poland-Dad-Fatigue-Man-Father-A-Person-114257.jpg",
+            "images/portraits/n_man-1464787_960_720.jpg",
+            "images/portraits/n_Person-Man-Headshot-Hat-Male-Portrait-People-2334963.jpg",
 //            "images/portraits/n_Peter_Pace_official_portrait.jpg",
 //            "images/portraits/n_pexels-photo-247917.jpeg",
 //            "images/portraits/n_pexels-photo-691989.jpeg",
@@ -122,12 +122,12 @@ public class App {
 
     public static void main(String[] args) throws IOException {
         final Trainer trainer = new Trainer(SAMPLES_POSITIVE, SAMPLES_NEGATIVE);
-        trainer.train(3);
+        trainer.train(5);
 
         FileUtils.cleanDirectory(new File(HERE, "results/positive"));
         FileUtils.cleanDirectory(new File(HERE, "results/negative"));
 
-        for (String image : ALL_IMAGES) {
+        for (String image : TEST_IMAGES) {
             final double score = trainer.check(image);
             if (score > THRESHOLD) {
                 System.out.println(String.format("MATCH (%.2f): %s", score, image));
